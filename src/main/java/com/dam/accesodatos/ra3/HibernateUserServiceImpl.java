@@ -23,9 +23,11 @@ import java.util.*;
 /**
  * Implementación del servicio Hibernate/JPA para gestión de usuarios
  *
+ * VERSIÓN MÍNIMOS ESTRICTOS
+ *
  * ESTRUCTURA DE IMPLEMENTACIÓN:
  * - ✅ 6 MÉTODOS IMPLEMENTADOS (ejemplos para estudiantes)
- * - ❌ 9 MÉTODOS TODO (estudiantes deben implementar)
+ * - ❌ 4 MÉTODOS TODO (estudiantes deben implementar - mínimo para aprobar RA3)
  *
  * MÉTODOS IMPLEMENTADOS (Ejemplos):
  * 1. testEntityManager() - Ejemplo básico de EntityManager
@@ -35,16 +37,11 @@ import java.util.*;
  * 5. findAll() - SELECT all con Repository
  * 6. findUsersByDepartment() - JPQL básico
  *
- * MÉTODOS TODO (Estudiantes implementan):
- * 1. getEntityManagerInfo() - EntityManagerFactory properties
- * 2. deleteUser() - EntityManager.remove()
- * 3. searchUsers() - Criteria API dinámica
- * 4. findUsersWithPagination() - Pageable
- * 5. transferData() - Transacción múltiple
- * 6. batchInsertUsers() - Batch con flush()
- * 7. getHibernateInfo() - SessionFactory Statistics
- * 8. getEntityMetadata() - Metamodel
- * 9. executeCountByDepartment() - JPQL COUNT
+ * MÉTODOS TODO (Estudiantes implementan - MÍNIMOS):
+ * 1. deleteUser() - EntityManager.remove()
+ * 2. searchUsers() - JPQL dinámico (simplificado, sin Criteria API)
+ * 3. transferData() - Transacción múltiple
+ * 4. executeCountByDepartment() - JPQL COUNT
  */
 @Service
 @Transactional(readOnly = true)  // Transacciones de solo lectura por defecto
@@ -82,35 +79,6 @@ public class HibernateUserServiceImpl implements HibernateUserService {
 
         return String.format("✓ EntityManager activo | Base de datos: %s | Test: %s",
                 result[1], result[0]);
-    }
-
-    @Override
-    public Map<String, String> getEntityManagerInfo() {
-        // TODO CE3.a, CE3.b: Implementar getEntityManagerInfo()
-        //
-        // Guía de implementación:
-        // 1. Obtener EntityManagerFactory:
-        //    EntityManagerFactory emf = entityManager.getEntityManagerFactory();
-        //
-        // 2. Obtener propiedades:
-        //    Map<String, Object> properties = emf.getProperties();
-        //
-        // 3. Crear mapa con información clave:
-        //    - hibernate.dialect
-        //    - jakarta.persistence.jdbc.url
-        //    - jakarta.persistence.jdbc.driver
-        //    - hibernate.show_sql
-        //    - hibernate.format_sql
-        //
-        // 4. Retornar Map<String, String> con la información
-        //
-        // Ejemplo:
-        // Map<String, String> info = new HashMap<>();
-        // info.put("dialect", properties.get("hibernate.dialect").toString());
-        // return info;
-
-        throw new UnsupportedOperationException("TODO CE3.a: Implementar getEntityManagerInfo() - " +
-                "Usar EntityManagerFactory.getProperties() para obtener configuración de Hibernate");
     }
 
     // ========== CE3.d, CE3.e: Operaciones CRUD ==========
@@ -297,62 +265,41 @@ public class HibernateUserServiceImpl implements HibernateUserService {
 
     @Override
     public List<User> searchUsers(UserQueryDto queryDto) {
-        // TODO CE3.f: Implementar searchUsers() con Criteria API
+        // TODO CE3.f: Implementar searchUsers() con JPQL dinámico
+        //
+        // VERSIÓN SIMPLIFICADA: Usa JPQL en lugar de Criteria API
         //
         // Guía de implementación:
-        // 1. Obtener CriteriaBuilder:
-        //    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        // 1. Construir JPQL dinámicamente:
+        //    StringBuilder jpql = new StringBuilder("SELECT u FROM User u WHERE 1=1");
         //
-        // 2. Crear CriteriaQuery:
-        //    CriteriaQuery<User> cq = cb.createQuery(User.class);
-        //
-        // 3. Definir Root (FROM):
-        //    Root<User> user = cq.from(User.class);
-        //
-        // 4. Construir predicates dinámicos:
-        //    List<Predicate> predicates = new ArrayList<>();
+        // 2. Añadir condiciones según filtros presentes:
         //    if (queryDto.getDepartment() != null) {
-        //        predicates.add(cb.equal(user.get("department"), queryDto.getDepartment()));
+        //        jpql.append(" AND u.department = :dept");
         //    }
         //    if (queryDto.getRole() != null) {
-        //        predicates.add(cb.equal(user.get("role"), queryDto.getRole()));
+        //        jpql.append(" AND u.role = :role");
         //    }
         //    if (queryDto.getActive() != null) {
-        //        predicates.add(cb.equal(user.get("active"), queryDto.getActive()));
+        //        jpql.append(" AND u.active = :active");
         //    }
         //
-        // 5. Aplicar WHERE:
-        //    cq.where(cb.and(predicates.toArray(new Predicate[0])));
+        // 3. Crear TypedQuery:
+        //    TypedQuery<User> query = entityManager.createQuery(jpql.toString(), User.class);
         //
-        // 6. Ejecutar query:
-        //    return entityManager.createQuery(cq).getResultList();
+        // 4. Setear parámetros solo para filtros presentes:
+        //    if (queryDto.getDepartment() != null) {
+        //        query.setParameter("dept", queryDto.getDepartment());
+        //    }
+        //    // ... repetir para role y active
         //
-        // VENTAJA vs JDBC: Type-safe, sin concatenar strings de SQL
+        // 5. Ejecutar y retornar:
+        //    return query.getResultList();
+        //
+        // VENTAJA vs RA2: Parámetros nombrados evitan SQL injection
 
         throw new UnsupportedOperationException("TODO CE3.f: Implementar searchUsers() - " +
-                "Usar Criteria API para construir query dinámica con filtros opcionales");
-    }
-
-    @Override
-    public List<User> findUsersWithPagination(int page, int size) {
-        // TODO CE3.e: Implementar findUsersWithPagination()
-        //
-        // Guía de implementación:
-        // 1. Crear Pageable:
-        //    Pageable pageable = PageRequest.of(page, size);
-        //
-        // 2. Usar repository con paginación:
-        //    Page<User> result = userRepository.findAll(pageable);
-        //
-        // 3. Retornar contenido:
-        //    return result.getContent();
-        //
-        // DIFERENCIA vs RA2:
-        // - RA2: LIMIT y OFFSET manual en SQL
-        // - RA3: Pageable abstraction, Spring genera LIMIT/OFFSET automáticamente
-
-        throw new UnsupportedOperationException("TODO CE3.e: Implementar findUsersWithPagination() - " +
-                "Usar PageRequest.of() y userRepository.findAll(pageable)");
+                "Usar JPQL dinámico con parámetros nombrados para filtros opcionales");
     }
 
     // ========== CE3.g: Transacciones ==========
@@ -387,107 +334,6 @@ public class HibernateUserServiceImpl implements HibernateUserService {
 
         throw new UnsupportedOperationException("TODO CE3.g: Implementar transferData() - " +
                 "Usar @Transactional con múltiples persist(), Spring maneja commit/rollback automáticamente");
-    }
-
-    @Override
-    @Transactional
-    public int batchInsertUsers(List<User> users) {
-        // TODO CE3.g: Implementar batchInsertUsers()
-        //
-        // Guía de implementación:
-        // 1. Configurar batch size (ya está en application.yml: hibernate.jdbc.batch_size=20)
-        //
-        // 2. Iterar con flush() periódico:
-        //    int batchSize = 20;
-        //    for (int i = 0; i < users.size(); i++) {
-        //        entityManager.persist(users.get(i));
-        //
-        //        if (i % batchSize == 0 && i > 0) {
-        //            entityManager.flush();   // Ejecuta INSERTs en batch
-        //            entityManager.clear();   // Limpia contexto de persistencia
-        //        }
-        //    }
-        //    entityManager.flush();  // Flush final
-        //
-        // 3. Retornar users.size()
-        //
-        // ¿POR QUÉ flush() y clear()?
-        // - flush(): Ejecuta las operaciones pendientes en BD (envía batch)
-        // - clear(): Limpia el contexto de persistencia para liberar memoria
-        //
-        // DIFERENCIA vs RA2:
-        // - RA2: PreparedStatement.addBatch(), executeBatch()
-        // - RA3: persist() + flush() periódico con batch_size configurado
-
-        throw new UnsupportedOperationException("TODO CE3.g: Implementar batchInsertUsers() - " +
-                "Usar persist() en bucle con flush() y clear() cada 20 registros");
-    }
-
-    // ========== CE3.b: Metadatos ==========
-
-    @Override
-    public String getHibernateInfo() {
-        // TODO CE3.b: Implementar getHibernateInfo()
-        //
-        // Guía de implementación:
-        // 1. Unwrap EntityManager a Session de Hibernate:
-        //    Session session = entityManager.unwrap(org.hibernate.Session.class);
-        //
-        // 2. Obtener SessionFactory:
-        //    SessionFactory sessionFactory = session.getSessionFactory();
-        //
-        // 3. Obtener Statistics (si está habilitado):
-        //    Statistics stats = sessionFactory.getStatistics();
-        //
-        // 4. Construir String con información:
-        //    - stats.getEntityCount() - Número de entidades
-        //    - stats.getQueryExecutionCount() - Queries ejecutadas
-        //    - stats.getConnectCount() - Conexiones abiertas
-        //    - etc.
-        //
-        // NOTA: Necesitas habilitar statistics en application.yml:
-        // hibernate.generate_statistics: true (ya está configurado)
-        //
-        // Ejemplo:
-        // return "Entidades: " + stats.getEntityCount() +
-        //        ", Queries: " + stats.getQueryExecutionCount();
-
-        throw new UnsupportedOperationException("TODO CE3.b: Implementar getHibernateInfo() - " +
-                "Usar Session.getSessionFactory().getStatistics() para obtener información de Hibernate");
-    }
-
-    @Override
-    public Map<String, Object> getEntityMetadata() {
-        // TODO CE3.b: Implementar getEntityMetadata()
-        //
-        // Guía de implementación:
-        // 1. Obtener Metamodel:
-        //    Metamodel metamodel = entityManager.getMetamodel();
-        //
-        // 2. Obtener EntityType de User:
-        //    EntityType<User> entityType = metamodel.entity(User.class);
-        //
-        // 3. Obtener atributos:
-        //    Set<Attribute<? super User, ?>> attributes = entityType.getAttributes();
-        //
-        // 4. Construir mapa con información de cada atributo:
-        //    Map<String, Object> metadata = new HashMap<>();
-        //    for (Attribute<? super User, ?> attr : attributes) {
-        //        Map<String, Object> attrInfo = new HashMap<>();
-        //        attrInfo.put("name", attr.getName());
-        //        attrInfo.put("javaType", attr.getJavaType().getSimpleName());
-        //        attrInfo.put("persistentAttributeType", attr.getPersistentAttributeType().toString());
-        //        metadata.put(attr.getName(), attrInfo);
-        //    }
-        //
-        // 5. Retornar metadata
-        //
-        // DIFERENCIA vs RA2:
-        // - RA2: DatabaseMetaData.getColumns() - info de BD
-        // - RA3: Metamodel - info de entidades JPA
-
-        throw new UnsupportedOperationException("TODO CE3.b: Implementar getEntityMetadata() - " +
-                "Usar Metamodel.entity(User.class) para obtener metadatos de la entidad");
     }
 
     @Override

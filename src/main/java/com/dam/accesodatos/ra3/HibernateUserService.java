@@ -14,21 +14,21 @@ import java.util.Map;
  *
  * RA3: Gestiona la persistencia de los datos identificando herramientas de mapeo objeto relacional (ORM)
  *
- * Esta interface define 15 herramientas MCP (métodos @Tool) que los estudiantes deben implementar
- * usando Hibernate/JPA (EntityManager, JPQL, Criteria API, @Transactional, etc.)
+ * VERSIÓN MÍNIMOS ESTRICTOS
+ * Esta interface define 10 herramientas MCP (métodos @Tool) enfocadas en los criterios esenciales del RA3
+ * usando Hibernate/JPA (EntityManager, JPQL, @Transactional, etc.)
  *
  * DIFERENCIAS vs RA2 (JDBC):
  * - RA2 usa: Connection, PreparedStatement, ResultSet, SQL puro
- * - RA3 usa: EntityManager, JPQL, CriteriaBuilder, @Transactional, Hibernate ORM
+ * - RA3 usa: EntityManager, JPQL, @Transactional, Hibernate ORM
  *
  * Métodos organizados por criterios de evaluación RA3:
- * - CE3.a: Instalación y configuración ORM (2 métodos)
+ * - CE3.a: Instalación y configuración ORM (1 método)
  * - CE3.d, CE3.e: Operaciones CRUD con Hibernate (5 métodos)
- * - CE3.f: Consultas JPQL/HQL (3 métodos)
- * - CE3.g: Gestión de transacciones (2 métodos)
- * - CE3.b: Metadatos ORM (3 métodos)
+ * - CE3.f: Consultas JPQL (3 métodos - searchUsers simplificado a JPQL)
+ * - CE3.g: Gestión de transacciones (1 método)
  *
- * Total: 15 métodos (6 ejemplos + 9 TODOs para estudiantes)
+ * Total: 10 métodos (6 ejemplos + 4 TODOs para estudiantes)
  */
 public interface HibernateUserService {
 
@@ -56,26 +56,6 @@ public interface HibernateUserService {
     @Tool(name = "test_entity_manager",
           description = "Prueba el EntityManager de Hibernate/JPA")
     String testEntityManager();
-
-    /**
-     * CE3.a, CE3.b: Obtiene información sobre la configuración de Hibernate
-     *
-     * Implementación requerida:
-     * - Obtener EntityManagerFactory: entityManager.getEntityManagerFactory()
-     * - Obtener propiedades: emf.getProperties()
-     * - Obtener Metamodel: emf.getMetamodel()
-     * - Retornar información clave (dialect, URL, driver, etc.)
-     *
-     * Clases JPA requeridas:
-     * - jakarta.persistence.EntityManagerFactory
-     * - jakarta.persistence.metamodel.Metamodel
-     *
-     * @return Mapa con información de configuración de Hibernate
-     * @throws RuntimeException si hay error
-     */
-    @Tool(name = "get_entity_manager_info",
-          description = "Obtiene información sobre la configuración de Hibernate y EntityManager")
-    Map<String, String> getEntityManagerInfo();
 
     // ========== CE3.d, CE3.e: Operaciones CRUD con Hibernate ==========
 
@@ -232,58 +212,33 @@ public interface HibernateUserService {
     List<User> findUsersByDepartment(String department);
 
     /**
-     * CE3.f: Busca usuarios con filtros dinámicos usando Criteria API
+     * CE3.f: Busca usuarios con filtros dinámicos usando JPQL
+     *
+     * VERSIÓN SIMPLIFICADA: Usa JPQL en lugar de Criteria API
      *
      * Implementación requerida:
-     * - Usar CriteriaBuilder: entityManager.getCriteriaBuilder()
-     * - Crear CriteriaQuery: cb.createQuery(User.class)
-     * - Crear Root: cq.from(User.class)
-     * - Construir Predicates dinámicos según filtros presentes
-     * - Aplicar con cq.where(cb.and(predicates...))
+     * - Construir JPQL dinámicamente según filtros presentes en queryDto
+     * - Ejemplo: "SELECT u FROM User u WHERE 1=1" + condiciones dinámicas
+     * - Si queryDto.getDepartment() != null: añadir "AND u.department = :dept"
+     * - Si queryDto.getRole() != null: añadir "AND u.role = :role"
+     * - Si queryDto.getActive() != null: añadir "AND u.active = :active"
+     * - Crear TypedQuery y setear parámetros solo para los filtros presentes
      *
      * Clases JPA requeridas:
-     * - jakarta.persistence.criteria.CriteriaBuilder
-     * - jakarta.persistence.criteria.CriteriaQuery
-     * - jakarta.persistence.criteria.Root
-     * - jakarta.persistence.criteria.Predicate
+     * - jakarta.persistence.TypedQuery
+     * - entityManager.createQuery(jpql, User.class)
      *
      * DIFERENCIAS vs RA2:
      * - RA2: StringBuilder para construir SQL dinámico
-     * - RA3: Criteria API type-safe
+     * - RA3: JPQL con parámetros nombrados
      *
      * @param query DTO con filtros opcionales
      * @return Lista de usuarios que cumplen los criterios
      * @throws RuntimeException si hay error
      */
     @Tool(name = "search_users",
-          description = "Busca usuarios con filtros dinámicos usando Criteria API")
+          description = "Busca usuarios con filtros dinámicos usando JPQL")
     List<User> searchUsers(UserQueryDto query);
-
-    /**
-     * CE3.f: Obtiene usuarios con paginación usando Pageable
-     *
-     * Implementación requerida:
-     * - Crear Pageable: PageRequest.of(page, size)
-     * - Usar userRepository.findAll(pageable)
-     * - Retornar page.getContent()
-     *
-     * Clases JPA requeridas:
-     * - org.springframework.data.domain.Pageable
-     * - org.springframework.data.domain.PageRequest
-     * - org.springframework.data.domain.Page
-     *
-     * DIFERENCIAS vs RA2:
-     * - RA2: LIMIT y OFFSET manual en SQL
-     * - RA3: Pageable abstraction de Spring Data
-     *
-     * @param page Número de página (0-indexed)
-     * @param size Número de registros por página
-     * @return Lista paginada de usuarios
-     * @throws RuntimeException si hay error
-     */
-    @Tool(name = "find_users_with_pagination",
-          description = "Obtiene usuarios con paginación usando Pageable y Page")
-    List<User> findUsersWithPagination(int page, int size);
 
     // ========== CE3.g: Gestión de Transacciones ==========
 
@@ -311,79 +266,6 @@ public interface HibernateUserService {
     @Tool(name = "transfer_data",
           description = "Inserta múltiples usuarios en una transacción usando @Transactional")
     boolean transferData(List<User> users);
-
-    /**
-     * CE3.g: Inserta múltiples usuarios usando batch processing de Hibernate
-     *
-     * Implementación requerida:
-     * - Configurar batch_size en application.yml
-     * - persist() en bucle
-     * - Hacer flush() y clear() cada N registros (batch_size)
-     * - Esto optimiza performance en inserciones masivas
-     *
-     * Clases JPA requeridas:
-     * - EntityManager
-     * - Métodos: persist(), flush(), clear()
-     *
-     * DIFERENCIAS vs RA2:
-     * - RA2: PreparedStatement.addBatch(), executeBatch()
-     * - RA3: persist() + flush() periódico
-     *
-     * @param users Lista de usuarios a insertar
-     * @return Número de usuarios insertados exitosamente
-     * @throws RuntimeException si hay error
-     */
-    @Tool(name = "batch_insert_users",
-          description = "Inserta múltiples usuarios usando batch processing de Hibernate")
-    int batchInsertUsers(List<User> users);
-
-    // ========== CE3.b: Metadatos ORM ==========
-
-    /**
-     * CE3.b: Obtiene información de Hibernate usando SessionFactory
-     *
-     * Implementación requerida:
-     * - Unwrap EntityManager a Session: entityManager.unwrap(Session.class)
-     * - Obtener SessionFactory: session.getSessionFactory()
-     * - Obtener Statistics: sf.getStatistics()
-     * - Retornar info: entidades, queries, cache, etc.
-     *
-     * Clases Hibernate requeridas:
-     * - org.hibernate.Session
-     * - org.hibernate.SessionFactory
-     * - org.hibernate.stat.Statistics
-     *
-     * @return Información detallada de Hibernate
-     * @throws RuntimeException si hay error
-     */
-    @Tool(name = "get_hibernate_info",
-          description = "Obtiene información de Hibernate usando SessionFactory y Statistics")
-    String getHibernateInfo();
-
-    /**
-     * CE3.b: Obtiene metadatos de la entidad User usando Metamodel
-     *
-     * Implementación requerida:
-     * - Obtener Metamodel: entityManager.getMetamodel()
-     * - Obtener EntityType: metamodel.entity(User.class)
-     * - Obtener atributos: entityType.getAttributes()
-     * - Retornar info de cada atributo (nombre, tipo, nullable, etc.)
-     *
-     * Clases JPA requeridas:
-     * - jakarta.persistence.metamodel.Metamodel
-     * - jakarta.persistence.metamodel.EntityType
-     * - jakarta.persistence.metamodel.Attribute
-     *
-     * DIFERENCIAS vs RA2:
-     * - RA2: DatabaseMetaData.getColumns() - metadatos de BD
-     * - RA3: Metamodel - metadatos de entidades JPA
-     *
-     * @return Mapa con información de atributos de User
-     * @throws RuntimeException si hay error
-     */
-    @Tool(name = "get_entity_metadata",
-          description = "Obtiene metadatos de la entidad User usando JPA Metamodel")
-    Map<String, Object> getEntityMetadata();
 
     /**
      * CE3.f: Ejecuta consulta COUNT por departamento usando JPQL
