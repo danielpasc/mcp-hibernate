@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.5'
+}
+
+group = 'com.dam.accesodatos'
+version = '1.0.0'
+description = 'Proyecto MCP para RA3: Hibernate/JPA ORM'
+
+sourceCompatibility = '21'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        url 'https://repo.spring.io/milestone'
+    }
+}
+
+ext {
+    springAiVersion = '1.1.0-M3'
+}
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+
+    // RA3: Hibernate/JPA - Acceso a datos mediante ORM
+    // DIFERENCIA CLAVE vs RA2: spring-boot-starter-data-jpa en lugar de spring-boot-starter-jdbc
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+
+    // Base de datos H2 (en memoria)
+    runtimeOnly 'com.h2database:h2'
+
+    // Validación (para @Entity)
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+    // JSON Processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Logging
+    implementation 'org.springframework.boot:spring-boot-starter-logging'
+
+    // Testing (opcional futuro)
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+    }
+}
